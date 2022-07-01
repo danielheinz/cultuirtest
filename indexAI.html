@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+
+    <link rel="stylesheet" href="styleAI.css">
+
+    <!--CSS-->
+    <!--CSS-->
+
+    <style>
+        @font-face {
+            font-family: 'Whyte';
+            src: local('Whyte Book'), local('Whyte-Book'), url('https://uploads-ssl.webflow.com/62bb0e164236d942d325e98c/62bb0e164236d903b525e9bc_ABCWhyte-Book.woff2') format('woff2');
+            font-weight: normal;
+            font-style: normal;
+        }
+    </style>
+
+    <!--CSS-->
+    <!--CSS-->
+
+</head>
+<body>
+    <main>
+        <form class="section">
+            <div class="field">
+                <div class="control">
+                    <textarea class="textarea is-big is-hovered" id="prompt" font-size="16px"></textarea>
+                </div>
+            </div>
+            <button class="button is-black is-hover is-pulled-right" type="submit" id="submit">Submit</button>
+        </form>
+        <section class="section">
+            <div id="response_parent_container"></div>
+        </section>
+    </main>
+
+    <!--JS-->
+    <!--JS-->
+   
+    <script>
+        const apiSecret = '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';
+        const promptButton = document.getElementById("submit");
+        const results = [];
+        const textArea = document.getElementById("prompt");
+        console.log(apiSecret);
+
+        function apiCall(event) {
+            event.preventDefault();
+            console.log("api call function ran")
+            const input = textArea.value.trim();
+            textArea.value = "";
+            textArea.focus();
+            console.log(input);
+            const data = {
+                //prompt contains instruction plus user input
+                prompt: "Generate 3 super viral, catchy and convincing headlines about the following topic:" + input,
+                temperature: 0.7,
+                max_tokens: 2500,
+            };
+
+            fetch("https://api.openai.com/v1/engines/text-davinci-002/completions", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${apiSecret}`,
+                },
+                body: JSON.stringify(data),
+            })
+                .then(function (response) {
+                    if (response.ok) {
+                        response.json().then(function (data) {
+                            console.log(data);
+                            let newResult = {
+                                "prompt": input,
+                                "response": data.choices[0].text
+                            };
+                            console.log("the result is" + newResult.response);
+                            results.unshift(newResult);
+                            console.log(results);
+                            const parent = document.getElementById("response_parent_container");
+                            const resultContainer = document.createElement("div");
+                            resultContainer.className = "container has-background-white mt-6 p-3 rounded-corners";
+                            //prepend instead of appendChild to results go from newest to oldest
+                            parent.prepend(resultContainer);
+                            const responsesPrompt = document.createElement("div");
+                            const responsesResponse = document.createElement("div");
+                            responsesPrompt.className = "columns is-mobile has-text-black";
+                            responsesResponse.className = "columns is-mobile has-text-black";
+                            resultContainer.appendChild(responsesPrompt);
+                            resultContainer.appendChild(responsesResponse);
+                            console.log(results);
+                            const resultsPrompt = results[0].prompt;
+                            //regex w/ global match used to remove new lines/breaks and insert a space instead when using ...g, " ");
+                            const resultsResponse = results[0].response.replace(/(\r\n|\n|\r)/g, "</br>");
+                            responsesPrompt.innerHTML = "<p class='column'>" + resultsPrompt.charAt(0).toUpperCase().bold() + resultsPrompt.slice(1).bold() + "</p>";
+                            responsesResponse.innerHTML = "<p class='column'>" + resultsResponse + "</p>";
+                        });
+                    };
+                });
+        };
+
+        promptButton.addEventListener("click", apiCall);
+
+        textArea.addEventListener("keypress", function onEvent(event) {
+            if (event.key === "Enter") {
+                event.preventDefault();
+                promptButton.click();
+            }
+        });</script>
+
+    <!--JS-->
+    <!--JS-->
+
+</body>
+</html>
